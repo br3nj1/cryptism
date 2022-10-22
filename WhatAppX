@@ -1,0 +1,19 @@
+# Search Registry for AppX Package
+# v1. commmon key
+# ----------------------------------------
+# 
+# Save whatappx.bat in PATH to Start > Run > "whatappx"
+# 
+# ----------------------
+# --- WhatAppX.ps1 ---
+
+param
+([Parameter(Mandatory)]$WhatAppX)
+reg query "HKEY_CURRENT_USER\Software\RegisteredApplications"  /f  $WhatAppX
+
+# --------------------
+# --  whatappx.bat ---
+ 
+@ echo  off
+Powershell.exe c:\scripts\WhatAppX.ps1
+pause
