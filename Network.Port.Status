@@ -1,0 +1,3 @@
+# Get port status of remote machine and show proccess name.
+
+Get-NetTCPConnection -LocalPort 139,445 -ea 0 | select Local*, Remote*, State, @{n="ProcessName";e={(Get-Process -Id $_.OwningProcess).ProcessName}} | ft -Auto
