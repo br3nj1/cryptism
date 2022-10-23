@@ -1,2 +1,1 @@
-Drafting a GitHub page. 
-Adding simple scripts and commands.
+my script (cryptism) page of various terminal solutions.
