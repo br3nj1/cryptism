@@ -1,0 +1,18 @@
+# Listen for IP address and capture system info
+# Mysterious IP would appear for a split second. 
+# IoT device related.
+
+$connection = Get-NetTCPConnection | where {($_.RemoteAddress -eq "77.72.85.117") -and ($_.State -eq "Established")}
+
+function start-monitoring
+{
+    While ($true)
+        {
+        
+if ($connection) {
+Get-WmiObject -class win32_service | Export-Csv C:\Users\jc501\Desktop\RIPElistening.csv }
+
+    }
+    }
+
+start-monitoring
