@@ -1,0 +1,20 @@
+# Monitor for Event IDs with Task Scheduler and email.
+
+$EventId = 4776,4768,4769,7001,7002
+
+$A = Get-WinEvent -MaxEvents 50  -FilterHashTable @{Logname = "Security" ; ID = $EventID ; 'StartTime' = (Get-Date -Hour 0 -Minute 0 -Second 0)} |  Format-List Id, LevelDisplayName, TimeCreated, Message
+$Message = $A.Message
+$EventID = $A.Id
+$MachineName = $A.MachineName
+$Source = $A.ProviderName
+
+Get-WinEvent -FilterHashTable @{'LogName' = 'Application'; 'StartTime' = (Get-Date -Hour 0 -Minute 0 -Second 0)} | Select-Object TimeCreated, ID, ProviderName, LevelDisplayName, Message | Format-Table -AutoSize
+$EmailFrom = "foo@mbar.com"
+$EmailTo = "foo@mbar.com"
+$Subject = "Event IDs Found"
+$Body = "EventID: $EventID`nSource: $Source`nMachineName: $MachineName `nMessage: $Message"
+$SMTPServer = "smtp.gmail.com"
+$SMTPClient = New-Object Net.Mail.SmtpClient($SmtpServer, 587)
+$SMTPClient.EnableSsl = $true
+$SMTPClient.Credentials = New-Object System.Net.NetworkCredential("foo@mbar.com", "pwdcred");
+$SMTPClient.Send($EmailFrom, $EmailTo, $Subject, $Body)
