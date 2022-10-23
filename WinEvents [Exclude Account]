@@ -1,6 +1,0 @@
-# Set date and exclude Microsoft account to audit admin, groups, services, other.
-
-$start = get-date 10/22/2022
-$secevents = get-eventlog -logname Security -Message "* logon*" | where "Account Name" -ne useracct@outlook.com
-$start
-$secevents | format-list -property *

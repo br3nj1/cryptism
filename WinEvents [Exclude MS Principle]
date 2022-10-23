@@ -1,0 +1,6 @@
+# Exclude Microsoft Principle account to audit Security Logs for admin, sids, services, other.
+
+$start = get-date 10/22/2022
+$secevents = get-eventlog -logname Security -Message "* logon*" | where "Account Name" -ne principleAcct@outlook.com
+$start
+$secevents | format-list -property *
