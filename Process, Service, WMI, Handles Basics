@@ -1,0 +1,30 @@
+# Simple filter set for basic forensics of limited remote terminal.
+# Process, Service, WMI, & Handles
+# For local investigation, Open in ISE, uncomment for quick parse.
+
+$myc = 127.0.0.1  
+$proc = get-process
+$serv = get-service 
+# where { $_.processname -like ‘ProfSvc’} 
+# get-service | select * | Format-Table
+# get-service | select * | Format-list
+# get-process | select * | format-table
+
+##### WORKING GREPS PROCESS AND SERVICCES ####
+# get-process | where { $_.processname -like ‘atom’}
+# get-service | where { $_.Name -like ‘ALG’}
+##############################################
+
+#Get-WmiObject win32_thread -filter AGL
+#$handle = (Get-Process notepad).handle
+#$handle = (Get-Process notepad).handle
+#Get-WmiObject win32_thread -filter “handle = $handle”
+
+
+#Get-Process -ID 3644 | Select-Object *
+#$handle = (Get-process A180AA).Handle
+#Get-WmiObject win32_thread -filter “handle = $handle”
+
+$A = Get-Process -id 2808 | select -ExpandProperty threads 
+
+$a.Handles
