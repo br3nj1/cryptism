@@ -1,0 +1,65 @@
+# This was piece mealed to encrypt an email and attachment to collect samples of output for remote system.
+
+$Recipient = "addy@outlook.com"
+Add-Type -assemblyName "System.Security" 
+$SmtpServer = "smtp.office365.com"
+$SmtpServerPort = "587"
+$SmtpUser = "addy@outlook.com""
+$SmtpPass = "xxxxxx"
+$Message = New-Object System.Net.Mail.SmtpClient $SMTPServer
+$Message = New-Object System.Net.Mail.MailMessage
+$Message.To.Add($Recipient)       #      $($Recipient.properties.mail.item(0)) 
+$Message.From = $smtpuser
+$Message.Subject = "Email Subject" 
+$Body = "This is the mail body"
+$file= get-item -Path "c:\users\x\desktop\ssl.txt"
+
+
+$MIMEMessage = New-Object system.Text.StringBuilder 
+$MIMEMessage.AppendLine("MIME-Version: 1.0") | Out-Null 
+$MIMEMessage.AppendLine("Content-Type: multipart/mixed; boundary=unique-boundary-1") | Out-Null 
+$MIMEMessage.AppendLine() | Out-Null
+$MIMEMessage.AppendLine("This is a multi-part message in MIME format.") | Out-Null
+$MIMEMessage.AppendLine("--unique-boundary-1") | Out-Null
+$MIMEMessage.AppendLine("Content-Type: text/plain") | Out-Null
+$MIMEMessage.AppendLine("Content-Transfer-Encoding: 7Bit") | Out-Null
+$MIMEMessage.AppendLine()
+$MIMEMessage.AppendLine($Body) | Out-Null
+$MIMEMessage.AppendLine() | Out-Null
+
+$MIMEMessage.AppendLine("--unique-boundary-1") | Out-Null
+$MIMEMessage.AppendLine("Content-Type: application/octet-stream; name="+ $file.Name) | Out-Null
+$MIMEMessage.AppendLine("Content-Transfer-Encoding: base64") | Out-Null
+$MIMEMessage.AppendLine("Content-Disposition: attachment; filename="+ $file.Name) | Out-Null
+$MIMEMessage.AppendLine() | Out-Null
+
+[Byte[]] $binaryData = [System.IO.File]::ReadAllBytes($file)
+[string] $base64Value = [System.Convert]::ToBase64String($binaryData, 0, $binaryData.Length)
+[int] $position = 0
+while($position -lt $base64Value.Length)
+{
+    [int] $chunkSize = 100
+    if (($base64Value.Length - ($position + $chunkSize)) -lt 0)
+    {
+        $chunkSize = $base64Value.Length - $position
+    }
+$MIMEMessage.AppendLine($base64Value.Substring($position, $chunkSize))
+$MIMEMessage.AppendLine()
+$position += $chunkSize;
+}
+$ChosenCertificate = "c:\users\jc501\desktop\powershelltest.cer"
+$MIMEMessage.AppendLine("--unique-boundary-1--") | Out-Null
+
+[Byte[]] $BodyBytes = [System.Text.Encoding]::ASCII.GetBytes($MIMEMessage.ToString())
+$ContentInfo = New-Object System.Security.Cryptography.Pkcs.ContentInfo (,$BodyBytes) 
+$CMSRecipient = New-Object System.Security.Cryptography.Pkcs.CmsRecipient $ChosenCertificate 
+$EnvelopedCMS = New-Object System.Security.Cryptography.Pkcs.EnvelopedCms $ContentInfo 
+$EnvelopedCMS.Encrypt($CMSRecipient) 
+[Byte[]] $EncryptedBytes = $EnvelopedCMS.Encode() 
+$MemoryStream = New-Object System.IO.MemoryStream @(,$EncryptedBytes) 
+$AlternateView = New-Object System.Net.Mail.AlternateView($MemoryStream, "application/pkcs7-mime; smime-type=enveloped-data;name=smime.p7m") 
+$Message.AlternateViews.Add($AlternateView)
+$MailClient = new-object system.net.mail.smtpclient( $smtpserver, $smtpserverport )
+$MailClient.enablessl = $true
+$MailClient.credentials = new-object system.net.networkcredential( $SmtpUser , $SmtpPass );
+$MailClient.Send($Message)
