@@ -1,4 +1,4 @@
-# Searches the Certificate Store for Thumbprint, String, or Vendor.
+# Search the Certificate Store for Thumbprint, String, or Vendor.
 # Written to locate IoC in FlawedAmmyy exploit.
 # Demo script by getting Thumbprint: 
 # Get-ChildItem Cert:\LocalMachine\ -Recurse | select Name,FriendlyName,Thumbprint
