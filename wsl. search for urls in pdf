@@ -1,0 +1,4 @@
+# Use WSL to search a PDF stream for urls.
+# Creates text output and keeps document isolated. 
+
+cat document.pdf | grep -o -e http://[^[:space:]\"]*.pdf | xargs wget
