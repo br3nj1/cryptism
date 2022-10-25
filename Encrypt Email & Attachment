@@ -47,7 +47,7 @@ $MIMEMessage.AppendLine($base64Value.Substring($position, $chunkSize))
 $MIMEMessage.AppendLine()
 $position += $chunkSize;
 }
-$ChosenCertificate = "c:\users\jc501\desktop\powershelltest.cer"
+$ChosenCertificate = "c:\users\X\desktop\powershelltest.cer"
 $MIMEMessage.AppendLine("--unique-boundary-1--") | Out-Null
 
 [Byte[]] $BodyBytes = [System.Text.Encoding]::ASCII.GetBytes($MIMEMessage.ToString())
