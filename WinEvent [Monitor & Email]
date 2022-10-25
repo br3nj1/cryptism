@@ -1,4 +1,4 @@
-# Monitor for Event IDs with Task Scheduler and email.
+# Monitor for Event IDs with Task Scheduler and send email.
 
 $EventId = 4776,4768,4769,7001,7002
 
@@ -9,6 +9,7 @@ $MachineName = $A.MachineName
 $Source = $A.ProviderName
 
 Get-WinEvent -FilterHashTable @{'LogName' = 'Application'; 'StartTime' = (Get-Date -Hour 0 -Minute 0 -Second 0)} | Select-Object TimeCreated, ID, ProviderName, LevelDisplayName, Message | Format-Table -AutoSize
+
 $EmailFrom = "foo@mbar.com"
 $EmailTo = "foo@mbar.com"
 $Subject = "Event IDs Found"
