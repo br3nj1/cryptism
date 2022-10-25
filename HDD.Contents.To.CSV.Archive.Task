@@ -1,3 +1,4 @@
-# Create scheduled task to export hard drive contents to text file for reference if drive fails.
+# Export hard drive contents to text file for reference if drive fails.
+# Create scheduled task.
 
 Get-ChildItem 'E:\Critical_Folders' -Recurse | Select-Object fullname | export-csv 'S:\Critical_folder_reference.csv' -NoTypeInformation
