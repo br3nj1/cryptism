@@ -2,7 +2,7 @@
 # Mysterious IP would appear for a split second. 
 # IoT device related.
 
-$connection = Get-NetTCPConnection | where {($_.RemoteAddress -eq "77.72.85.117") -and ($_.State -eq "Established")}
+$connection = Get-NetTCPConnection | where {($_.RemoteAddress -eq "52.47.37.23") -and ($_.State -eq "Established")}
 
 function start-monitoring
 {
