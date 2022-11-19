@@ -10,7 +10,7 @@ function start-monitoring
         {
         
 if ($connection) {
-Get-WmiObject -class win32_service | Export-Csv C:\Users\jc501\Desktop\RIPElistening.csv }
+Get-WmiObject -class win32_service | Export-Csv C:\Users\user\Desktop\RIPElistening.csv }
 
     }
     }
