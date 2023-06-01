@@ -1,0 +1,12 @@
+#This is an automated shutdown script that prompts the admin to enter the server name, then prompts the remote UI that the computer will #shut down in 5 minutes and a logged in user must save their work. The #shutdown is then enforced.
+
+$server=read-host 'Enter Hostname'
+
+while ($choice -notmatch "[y|n]"){
+$choice = read-host "If you want to immediately shutdown the remote computer select yes or if you want to give the user 5 minutes to prepare for shutdown select no. (Y/N)"}
+if($choice -eq "y"){
+shutdown  /s /m \\$server /t 00
+}
+if($choice -eq "n"){
+shutdown /s /m \\$server /f /c "Your session needs to close immediately for network security reasons. Please close this message and save your work. The system will shutdown in 5 minutes." /t 399
+}
