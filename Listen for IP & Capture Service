@@ -1,6 +1,5 @@
-# Listen for IP address and capture system info
-# Mysterious IP would appear for a split second. 
-# IoT device related.
+# Listen for an IP address and capture system info with WMI.
+# Use-Case; IP is established for less than one second, such as unknown IoT broadcast.
 
 $connection = Get-NetTCPConnection | where {($_.RemoteAddress -eq "52.47.37.23") -and ($_.State -eq "Established")}
 
