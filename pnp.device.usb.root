@@ -1,0 +1,12 @@
+# Locate the USB Mass Storage Device with a yellow exclamation mark, right click on the parent “USB Root Hub” and select Uninstall. 
+# https://www.raymond.cc/blog/remount-ejected-or-safely-removed-usb-device-without-unplug-and-reinsert/
+# https://superuser.com/questions/1165637/one-gesture-solution-to-disable-enable-a-device-in-device-manager-without-a-thi
+# ----------------------------------------------------------------- #
+
+
+# Method 1
+Get-PnpDevice -FriendlyName "USB Root Hub (USB 3.0)" | Disable-PnpDevice -confirm:$false; Get-PnpDevice -FriendlyName "USB Root Hub (USB 3.0)" | Enable-PnpDevice -confirm:$false
+
+
+# Method 2
+# Get-PnpDevice | Where-Object { $_.FriendlyName -match 'USB Root Hub (USB 3.0)' } | Disable-PnpDevice -Confirm:$false

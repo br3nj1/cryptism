@@ -1,0 +1,9 @@
+# Get list of installed software.
+
+# Method 1.
+Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Installer\UserData\*\Products\*\InstallProperties | ? {$_.DisplayName -eq "VMWare Tools"} | Select -Property DisplayName,DisplayVersion,UninstallString | fl
+
+# Method 2.
+get-itemproperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table –AutoSize
+
+

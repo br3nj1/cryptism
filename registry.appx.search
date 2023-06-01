@@ -1,0 +1,25 @@
+# Search Registry for AppX Package
+# Create .bat use start > run > whatappx
+# v1. commmon key
+# --------------------
+# Standard Prompt
+# $WhatAppX = Read-Host "WhatAppX To Search?"
+# reg query "HKEY_CURRENT_USER\Software\RegisteredApplications" /f  $WhatAppX
+#
+# ----------------------------------------
+#
+# Create .bat to Start > Run > "whatappx"
+#
+# ----------------------
+# --- WhatAppX.ps1 ---
+
+param
+([Parameter(Mandatory)]$WhatAppX)
+reg query "HKEY_CURRENT_USER\Software\RegisteredApplications"  /f  $WhatAppX
+
+# --------------------
+# --  whatappx.bat ---
+ 
+@ echo  off
+Powershell.exe c:\scripts\WhatAppX.ps1
+pause

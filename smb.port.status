@@ -1,0 +1,12 @@
+# SMB network connection status
+
+Get-NetTCPConnection -LocalPort 139,445 -ea 0 | select Local*, Remote*, State, @{n="ProcessName";e={(Get-Process -Id $_.OwningProcess).ProcessName}} | ft -Auto
+
+# Sample Output
+# LocalAddress LocalPort RemoteAddress RemotePort  State ProcessName
+# ------------ --------- ------------- ----------  ----- -----------
+# ::                 445 ::                     0 Listen System     
+# 192.168.55.1       139 0.0.0.0                0 Listen System     
+# 192.168.0.10       139 0.0.0.0                0 Listen System     
+# 172.30.0.1         139 0.0.0.0                0 Listen System     
+# 172.28.48.1        139 0.0.0.0                0 Listen System     
