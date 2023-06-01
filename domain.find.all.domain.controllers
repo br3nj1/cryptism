@@ -1,0 +1,12 @@
+import-module ActiveDirectory -force
+$adforest=get-adforest
+$domainlist=$adforest.domains
+foreach($domain in $domainlist)
+{
+$pdc=(Get-ADDomain -identity $domain).pdcemulator
+$dclist=(get-addomain -identity $domain -server $pdc ).replicadirectoryservers
+foreach($dc in $dclist)
+{
+get-addomaincontroller -identity $dc | export-csv -notypeinformation -path dclist.csv -append
+}
+}
