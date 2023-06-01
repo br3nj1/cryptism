@@ -1,0 +1,9 @@
+# Reload browser by sending F5 key with wscript.
+
+$wshell = New-Object -ComObject wscript.shell
+$wshell.AppActivate('Google Chrome')
+
+while($true){
+    $wshell.SendKeys("{F5}")
+    sleep 300
+    }
