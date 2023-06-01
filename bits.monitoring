@@ -1,0 +1,14 @@
+# Audit BitsTransfer with Scheduled Task.
+# Alternate version for interactive terminal.
+# Get-BitsTransfer * | Where-Object { $_.Timestamp -lt (Get-Date).AddHours(-48) } | Select-Object HTTPMethod,OwnerAccount,CreationTime,FileList | Out-File
+# Alter version to parse out domain from url; returns results & errors.
+# Where-Object { $_.Timestamp -gt (Get-Date).AddHours(-24)}
+
+# Bits-Transfer 
+
+$excludeDomains = @("mozilla.net")
+
+Get-BitsTransfer * | Where-Object { 
+    ($_.Timestamp -lt (Get-Date).AddHours(-72)) -and 
+    ($_.FileList -notlike "*$($excludeDomains -join "|")*")
+} | Select-Object -Unique FileList | Out-File C:\Git\BitTransfer72h\$(get-date -f yyyy-MM-dd).txt
