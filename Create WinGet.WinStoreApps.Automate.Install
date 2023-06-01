@@ -1,0 +1,18 @@
+# Automate Window Store Installations with WinGet.
+# Accepts Package & MSstore Source Aggreements.
+# Confirm Publisher by uncommenting 'winget show'
+# Future release to error check and output publisher.
+
+$WinStoreApps =  @("OneNote","IrfanView64","Okular") 
+
+function InstallWinApps()
+{
+     foreach ($App in $WinStoreApps)
+    {    
+        #  winget.exe show $app | findstr Publisher 
+        winget.exe install $app --source msstore --disable-interactivity --accept-package-agreements --accept-source-agreements 
+
+        }
+    }
+
+InstallWinApps 
