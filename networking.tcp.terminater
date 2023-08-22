@@ -1,0 +1,11 @@
+# TCP Terminator ends all pids with Establish netcons.
+# Check Windows Resource Monitor to see if TCP Connections are maxed.
+# Two Solutions. Powershell script or set an alias to start run.
+
+Get-NetTCPConnection -State Established | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+
+# OR
+
+Set-Alias -Name TCP-Terminator -Value {
+    Get-NetTCPConnection -State Established | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+}
