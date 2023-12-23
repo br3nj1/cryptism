@@ -1,0 +1,16 @@
+#!/bin/bash
+# Recursively move all files in a directory to a new folder.
+
+# Directory containing the files
+source_dir="/mnt/c/Users/xxxx/Desktop/project/move_me/"
+
+# Directory where all files will be moved
+destination_dir="/mnt/c/Users/jc501/Desktop/New/all_files"
+
+# Create the destination directory if it doesn't exist
+mkdir -p "$destination_dir"
+
+# Move all files from source_dir and its subdirectories to destination_dir
+find "$source_dir" -type f -exec mv {} "$destination_dir" \;
+
+echo "All files have been moved to $destination_dir"
