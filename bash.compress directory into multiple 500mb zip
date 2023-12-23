@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Compress a large directory into multiple 500mb zip files
+  
+# Directory containing files
+ebook_dir="/mnt/c/Users/xxx/Desktop/project/all_files"
+
+# Check if the directory exists
+if [ ! -d "$ebook_dir" ]; then
+    echo "Directory does not exist: $ebook_dir"
+    exit 1
+fi
+
+# Maximum size for each zip file in kilobytes (500MB)
+max_size=$((500 * 1024))
+
+# Temporary file to store file list
+temp_file=$(mktemp)
+
+# Find all files and sort by size
+find "$ebook_dir" -type f -print0 | xargs -0 du -ak | sort -n > "$temp_file"
+
+# Initialize variables
+current_size=0
+file_list=()
+zip_count=1
+
+# Read each file and its size
+while read -r size file; do
+    if (( current_size + size > max_size )); then
+        # Compress the files when the limit is reached
+        zip "ebook_part_$zip_count.zip" "${file_list[@]}"
+        zip_count=$((zip_count + 1))
+        file_list=()
+        current_size=0
+    fi
+    file_list+=("$file")
+    current_size=$((current_size + size))
+done < "$temp_file"
+
+# Compress remaining files
+if [ ${#file_list[@]} -ne 0 ]; then
+    zip "ebook_part_$zip_count.zip" "${file_list[@]}"
+fi
+
+# Clean up
+rm "$temp_file"
+
