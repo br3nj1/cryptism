@@ -1,0 +1,40 @@
+# Audit services by corrolating Get-Service with the Registry.
+# Lists associated Groups Dependancies, Privileges, plus Dll Path.
+# Allows insight to spot member, token, plus dll injection.
+
+# Get a list of all services
+$services = Get-Service | Where-Object { $_.Status -ne 'Stopped' }
+
+# Retrieve detailed service info including the 'svchost -k' group from the registry
+$serviceDetails = $services | ForEach-Object {
+    $service = $_
+    $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\$($service.Name)"
+    $imagePath = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).ImagePath
+    $displayName = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).DisplayName
+    $DependOnService = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).DependOnService
+    $Group = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).Group
+    $ObjectName = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).ObjectName
+    $RequiredPrivileges = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).RequiredPrivileges
+
+    # Determine if the service is hosted by svchost and its group
+    $svchostGroup = $null
+    if ($imagePath -and $imagePath.ToLower().Contains("svchost")) {
+        $svchostGroup = (Get-ItemProperty -Path $regPath -ErrorAction SilentlyContinue).Parameters.ServiceDll
+    }
+
+    # Create a custom PSObject for each service details
+    [PSCustomObject]@{
+        ServiceName = $service.Name
+        ImagePath   = $imagePath
+        Group = $Group
+        SvchostGroup = $svchostGroup
+        DependOnService = $DependOnService
+        DependentServices = $service.DependentServices
+        ObjectName = $ObjectName
+        RequiredPrivileges = $RequiredPrivileges
+        DisplayName = $displayName
+    }
+}
+
+# Output the service details
+$serviceDetails | Format-list 
