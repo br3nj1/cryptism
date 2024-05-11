@@ -1,0 +1,20 @@
+# =============
+# Disable NetBios
+# --------------
+
+# List Adapters: ipconfig /all | find "NetBIOS"
+
+$regkey = "HKLM:SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces"
+Get-ChildItem $regkey |foreach { Set-ItemProperty -Path "$regkey\$($_.pschildname)" -Name NetbiosOptions -Value 2 -Verbose}
+
+# =============
+# Disable LLMNR
+# --------------
+
+New-Item "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT" -Name DNSClient  -Force
+New-ItemProperty "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" -Name EnableMultiCast -Value 0 -PropertyType DWORD  -Force
+
+#  Alternately, disable via GPO.
+#  Computer Configuration -> Administrative Templates -> Network -> DNS Client;
+#  Enable  Turn off multicast name resolution policy by changing its value to Enabled;
+#  Or you can use GPP to deploy the EnableMulticast = 0 registry parameter on domain computers (on the reg key HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient).
