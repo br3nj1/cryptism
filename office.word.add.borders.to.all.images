@@ -1,0 +1,25 @@
+# Add Borders To All Images In A Word Document. 
+
+# This VBA script will loop through all inline shapes (images) in the document and apply a single-line border with the specified width and # #  color to each image. Adjust the OutsideLineWidth and OutsideColor properties as needed to match your desired border style.
+
+# Open the VBA Editor: Press Alt + F11 to open the VBA editor.
+# Insert a New Module: In the VBA editor, go to Insert > Module.
+# Paste the VBA Code:
+
+vba
+Copy code
+Sub AddBordersToImages()
+    Dim shape As InlineShape
+    For Each shape In ActiveDocument.InlineShapes
+        If shape.Type = wdInlineShapePicture Then
+            shape.Borders.Enable = True
+            shape.Borders.OutsideLineStyle = wdLineStyleSingle
+            shape.Borders.OutsideLineWidth = wdLineWidth150pt ' Adjust the line width as needed
+            shape.Borders.OutsideColor = RGB(0, 0, 0) ' Adjust the color as needed (RGB for black)
+        End If
+    Next shape
+End Sub
+
+
+# Run the Macro: Close the VBA editor and go back to your Word document.
+# Press Alt + F8, select AddBordersToImages, and click Run.
