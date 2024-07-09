@@ -1,0 +1,33 @@
+# This VB Script automates merging cells in a column with matching names.
+# Excel > Alt + F11 > Insert > Module 
+
+Sub MergeCellsBasedOnUniqueValue()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim currentRow As Long
+    Dim mergeStart As Long
+    Dim mergeValue As String
+    Dim col As Integer
+
+    ' Set the worksheet
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    
+    ' Columns to merge based on unique values
+    For col = 1 To 2
+        lastRow = ws.Cells(ws.Rows.Count, col).End(xlUp).Row
+        mergeStart = 2
+        mergeValue = ws.Cells(mergeStart, col).Value
+        
+        For currentRow = 3 To lastRow + 1
+            If ws.Cells(currentRow, col).Value <> mergeValue Then
+                If mergeStart <> currentRow - 1 Then
+                    ws.Range(ws.Cells(mergeStart, col), ws.Cells(currentRow - 1, col)).Merge
+                    ws.Cells(mergeStart, col).HorizontalAlignment = xlCenter
+                    ws.Cells(mergeStart, col).VerticalAlignment = xlCenter
+                End If
+                mergeStart = currentRow
+                mergeValue = ws.Cells(mergeStart, col).Value
+            End If
+        Next currentRow
+    Next col
+End Sub
