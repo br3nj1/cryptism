@@ -1,0 +1,70 @@
+# Two Excel VB Scripts for coloring alternate rows.
+# 1. Color every other row | standard
+# 2. Color every other row | Column A is merged cell.
+
+-----------------------------------------------------
+
+Sub AlternateRowColors() 
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim i As Long
+   
+    ' Set your worksheet
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' Adjust the sheet name as needed
+   
+    ' Find the last row with data
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+   
+    ' Loop through each row
+    For i = 1 To lastRow
+        If i Mod 2 = 0 Then
+            ' Apply green color to even rows
+            ws.Rows(i).Interior.Color = RGB(144, 238, 144)
+        Else
+            ' Apply blue color to odd rows
+            ws.Rows(i).Interior.Color = RGB(173, 216, 230)
+        End If
+    Next i
+End Sub
+
+-----------------------------------------------------
+
+Sub AlternateRowColorsMergedCells()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim i As Long
+    Dim rng As Range
+    Dim colorFlag As Boolean
+    Dim lastCol As Long
+   
+    ' Set your worksheet
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' Adjust the sheet name as needed
+   
+    ' Find the last row with data
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+   
+    ' Find the last column with data
+    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+   
+    ' Initialize color flag
+    colorFlag = True
+   
+    ' Loop through each row
+    For i = 1 To lastRow
+        Set rng = ws.Cells(i, 1).MergeArea
+       
+        If colorFlag Then
+            ' Apply blue color
+            ws.Range(ws.Cells(rng.Row, 1), ws.Cells(rng.Row + rng.Rows.Count - 1, lastCol)).Interior.Color = RGB(173, 216, 230)
+        Else
+            ' Apply green color
+            ws.Range(ws.Cells(rng.Row, 1), ws.Cells(rng.Row + rng.Rows.Count - 1, lastCol)).Interior.Color = RGB(144, 238, 144)
+        End If
+       
+        ' Toggle the color flag
+        colorFlag = Not colorFlag
+       
+        ' Skip rows in the merged area
+        i = i + rng.Rows.Count - 1
+    Next i
+End Sub
