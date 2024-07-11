@@ -1,0 +1,16 @@
+# Run a ps1 as a scheduled task.
+# Example uses cryptism/Bits-Transfer script.
+# purpose: deploy ps1 as task on new system
+
+# Define the scheduled task settings
+$taskName = "BitTransferTask"
+$scriptPath = "C:\Path\To\Your\Script\bitransfer.ps1"  # Update this path to the actual location of your script
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+$trigger = New-ScheduledTaskTrigger -Daily -At "2:00AM"  # Update the trigger settings as needed
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+
+# Register the scheduled task
+Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $taskName -Settings $settings -Description "Runs the BitTransfer script"
+
+# Confirm creation
+Write-Output "Scheduled task '$taskName' has been created successfully."
