@@ -1,0 +1,40 @@
+# Script To Search Directories For A File Type and Move All To Current Directory
+# Version 2 includes Deleting The Empty Directories
+
+===========================================
+# Version 1: Search recursive folders for file type and move to current directory.
+
+$currentDirectory = Get-Location
+
+# Get all .txt files in the current directory and all subdirectories
+$txtFiles = Get-ChildItem -Path $currentDirectory -Recurse -Filter *.txt
+
+foreach ($file in $txtFiles) {
+    Move-Item -Path $file.FullName -Destination $currentDirectory
+}
+
+Write-Host "All .txt files have been moved to $currentDirectory"
+
+=========================================
+
+# Version 2: Deletes The Empty Directories
+
+# Search recursive folders for file type and move to current directory, then delete all subfolders.
+
+$currentDirectory = Get-Location
+
+# Get all .txt files in the current directory and all subdirectories
+$txtFiles = Get-ChildItem -Path $currentDirectory -Recurse -Filter *.txt
+
+foreach ($file in $txtFiles) {
+    Move-Item -Path $file.FullName -Destination $currentDirectory
+}
+
+$directories = Get-ChildItem -Path $currentDirectory -Recurse -Directory
+
+foreach ($directory in $directories) {
+    Remove-Item -Path $directory.FullName -Recurse -Force
+}
+
+Write-Host "All .txt files have been moved to $currentDirectory and all directories have been deleted"
+
