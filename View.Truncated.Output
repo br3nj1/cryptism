@@ -1,0 +1,9 @@
+Five ways to fix PowerShell truncated output.
+1. Increase Console Width
+$host.UI.RawUI.BufferSize = New-Object Management.Automation.Host.Size(200, $host.UI.RawUI.BufferSize.Height)
+2. | Format-List
+3. | Format-Table -AutoSize
+4. | Out-File "C:\CIMClasses.txt"
+5a. Get-CimClass -Namespace root\cimv2  | Out-String -Width 200
+5b Get-CimClass -Namespace root\cimv2 | Format-Table -AutoSize
+
