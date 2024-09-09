@@ -1,8 +1,12 @@
 # This file is a reference to Excel solutions disocvered online. 
 ================================================================
+# Sources
 
-Create a Table of Contents with hyperlinks to WorkSheets within xlsx.
+https://www.howtogeek.com/sharing-your-excel-spreadsheet-with-others-do-these-things-first/
 https://www.howtogeek.com/how-to-add-a-table-of-contents-to-excel-and-why-you-should/
+https://www.howtogeek.com/812620/excel-color-alternate-rows/
+================================================================
+Create a Table of Contents with hyperlinks to WorkSheets within xlsx.
 Method 1: Insert Hyperlink
 Method 2: =HYPERLINK("#'WorkSheetName'!A1", "FriendlyName")
 Method 3: Automtic via Import.
