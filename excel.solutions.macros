@@ -1,0 +1,6 @@
+# This file is a reference to Excel solutions disocvered online. 
+================================================================
+
+Create a Table of Contents with hyperlinks to WorkSheets within xlsx.
+Method 1: Insert Hyperlink
+Method 2: =HYPERLINK("#'WorkSheetName'!A1", "FriendlyName")
