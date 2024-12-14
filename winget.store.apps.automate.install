@@ -23,7 +23,7 @@ InstallWinApps
 #  ---------------------------------------- #
 
 # List of WinStoreApps to check
-$WinStoreApps = @("XMLNotepad","Pocketmags","IrfanView64","Okular","IDM Integration Module","AV1 Video Extension","Raw Image Extension","HEIF Image Extensions","Windows Scan","Windows File Manager","Windows Performance Analyzer","Windows Sound Recorder","Windows File Recovery","OneNote","Mozilla Firefox","Diagnostic Data Viewer","WinDbg Preview","Phone Link","Microsoft To Do: Lists, Tasks & Reminders","Pengwin","Ubuntu on Windows","Windows Subsystem for Linux","AlmaLinux 9","Ubuntu 22.04.2 LTS","Ubuntu 18.04 on Windows","Fedora Remix for WSL","Ubuntu 20.04","Debian","OpenInWSL","GWSL","Microsoft Defender Application Guard","Microsoft Wireless Display Adapter","Microsoft Remote Desktop","OneDrive","Mozilla Firefox")
+$WinStoreApps = @("XMLNotepad","IrfanView64","Okular")
 
 # Function to check app installation status
 function Check-WinApps {
