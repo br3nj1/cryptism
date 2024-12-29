@@ -1,0 +1,26 @@
+# Disable Function Discovery Resource Publication and SSDP to stop browsers from using port 5353.
+# TCPView shows browsers using port 5353 even though the NIC disables usage
+# netstat -ano | findstr 5353
+
+$services = @(
+    "FDResPub",  # Function Discovery Resource Publication
+    "SSDPSRV"    # SSDP Discovery
+)
+
+foreach ($service in $services) {
+    $svc = Get-Service -Name $service -ErrorAction SilentlyContinue
+
+    if ($svc) {
+             if ($svc.Status -eq "Running") {
+            Write-Output "Stopping service: $service"
+            Stop-Service -Name $service -Force
+        }
+
+        Write-Output "Disabling service: $service"
+        Set-Service -Name $service -StartupType Disabled
+    } else {
+        Write-Output "Service $service not found on this system."
+    }
+}
+
+Write-Output "Services have been disabled successfully."
