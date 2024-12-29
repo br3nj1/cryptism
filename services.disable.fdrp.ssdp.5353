@@ -1,6 +1,7 @@
 # Disable Function Discovery Resource Publication and SSDP to stop browsers from using port 5353.
 # TCPView shows browsers using port 5353 even though the NIC disables usage
 # netstat -ano | findstr 5353
+# Disable w/ Local GPO: Computer Configuration -> Administrative Templates -> System -> Services
 
 $services = @(
     "FDResPub",  # Function Discovery Resource Publication
