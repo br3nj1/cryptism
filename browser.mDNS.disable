@@ -1,0 +1,10 @@
+# Browsers can use mDNS port 5353 even if you disable of Multicast DNS in NIC or by disabling SSDP & FuDRP services.
+
+Open Browser, Go To following URL:
+edge://flags/#enable-webrtc-hide-local-ips-with-mdns
+chrome://flags/#enable-webrtc-hide-local-ips-with-mdns
+vivaldi://flags/#enable-webrtc-hide-local-ips-with-mdns
+
+firefox |  about:config > network.mdns.enabled
+
+
