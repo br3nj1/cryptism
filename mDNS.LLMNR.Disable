@@ -1,0 +1,127 @@
+# Multicast DNS (mDNS) is a network protocol that resolves hostnames to IP addresses within local networks without requiring a traditional DNS server.
+# For environments where mDNS isn't needed, it's recommended to disable it for better performance and security.
+# Verify mDNS is in use
+
+netstat -ano | findstr 5353
+
+===============================================
+
+# Disable via NIC
+
+1. Start > Run > NCPA.CPL
+2. Right-Click Ethernet > Properties
+
+Uncheck:
+Link-Layer Topology Discovery Mapper I/O Driver
+Link-Layer Topology Discovery Responder
+
+===============================================
+
+# Disable Function Discovery Resource Publication and SSDP to stop browsers from using port 5353.
+# TCPView shows browsers using port 5353 even though the NIC disables usage
+
+# Disable mDNS Service on Windows (Discovery Resource Publication and SSDP)
+
+$services = @(
+    "FDResPub",  # Function Discovery Resource Publication
+    "SSDPSRV"    # SSDP Discovery
+)
+
+foreach ($service in $services) {
+    $svc = Get-Service -Name $service -ErrorAction SilentlyContinue
+
+    if ($svc) {
+             if ($svc.Status -eq "Running") {
+            Write-Output "Stopping service: $service"
+            Stop-Service -Name $service -Force
+        }
+
+        Write-Output "Disabling service: $service"
+        Set-Service -Name $service -StartupType Disabled
+    } else {
+        Write-Output "Service $service not found on this system."
+    }
+}
+
+Write-Output "Services have been disabled successfully."
+
+
+==============================================
+
+# PowerShell Script to Disable Link-Layer Topology Discovery
+# Define Adapters
+
+$adapters = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\*" | Select-Object PSChildName
+
+foreach ($adapter in $adapters) {
+    $keyPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($adapter.PSChildName)"
+
+    Set-ItemProperty -Path $keyPath -Name "DisableLLTDIO" -Value 1 -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $keyPath -Name "DisableLLTDIO_Responder" -Value 1 -ErrorAction SilentlyContinue
+
+    Write-Output "Disabled Link-Layer Topology Discovery for adapter: $($adapter.PSChildName)"
+}
+
+Write-Output "Link-Layer Topology Discovery disabled successfully for all adapters."
+
+==============================================
+
+#  Restrict mDNS via Local Firewall Rules
+
+netsh advfirewall firewall add rule name="Block mDNS" protocol=UDP dir=out localport=5353 action=block
+netsh advfirewall firewall add rule name="Block mDNS" protocol=UDP dir=in localport=5353 action=block
+
+==============================================
+
+# Disable w/ Local Group Policy
+
+Computer Configuration -> Administrative Templates -> System -> Services
+
+==============================================
+
+Blocking mDNS in Browser Extensions
+Some browsers might use mDNS even if the WebRTC setting is disabled. For a stricter approach:
+
+Use a browser extension like uBlock Origin or NoScript to block multicast DNS requests.
+Configure rules to prevent access to 224.0.0.251:5353 (the mDNS multicast address and port).
+
+==============================================
+
+# Restrict Browsers
+
+Open Browser, Go To following URL:
+edge://flags/#enable-webrtc-hide-local-ips-with-mdns
+chrome://flags/#enable-webrtc-hide-local-ips-with-mdns
+vivaldi://flags/#enable-webrtc-hide-local-ips-with-mdns
+
+Look for the WebRTC: Hide Local IPs with mDNS flag.
+Set it to Disabled.
+
+firefox |  about:config > network.mdns.enabled
+
+=============================================
+
+The changes will be applied by reboot, disable/enable NIC, gpupdate /force
+
+============================================-
+
+mDNS Description
+
+What is mDNS?
+Multicast DNS (mDNS) is a network protocol that resolves hostnames to IP addresses within local networks without requiring a traditional DNS server. It is commonly used for device discovery and communication on small, local networks (e.g., home or office environments).
+
+Key Features
+Protocol: Part of the Zeroconf/Bonjour suite, mDNS uses the UDP protocol over port 5353.
+Local Discovery: Enables devices like printers, smart TVs, or IoT devices to advertise and discover services without manual configuration.
+Multicast: Sends DNS-like queries to all devices in the local subnet via the multicast IP address 224.0.0.251.
+
+Use Cases
+Service Discovery: Devices can announce and discover services such as printing or file sharing (e.g., AirPrint, AirPlay).
+IoT Integration: Essential for smart home devices to locate and communicate with each other.
+Local Hostname Resolution: Resolves local device names (e.g., myprinter.local) without a central DNS server.
+
+Security Concerns
+Potential for Abuse: Attackers can exploit mDNS to perform reconnaissance or amplify DDoS attacks.
+Uncontrolled Traffic: mDNS broadcasts can create unnecessary network congestion.
+
+For environments where mDNS isn't needed, it's recommended to disable it for better performance and security.
