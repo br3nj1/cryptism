@@ -1,0 +1,33 @@
+# List Location of all AppX Packages
+# Preface: List all AppX fields: # Get-AppxPackage -Name "*Co*" | select *
+# ==================================
+
+# List All AppX Locations
+
+
+Get-AppxPackage | select InstallLocation |
+foreach {dir $_.InstallLocation -Recurse -Include "*.exe" | FullName }
+
+
+
+# Example Output
+
+Name                   : MicrosoftWindows.Client.Core
+Publisher              : CN=Microsoft Windows, O=Microsoft Corporation, L=Redmond, S=Washington, C=US
+PublisherId            : cw5n1h2txyewy
+Architecture           : X64
+ResourceId             :
+Version                : 1000.26100.31.0
+PackageFamilyName      : MicrosoftWindows.Client.Core_cw5n1h2txyewy
+PackageFullName        : MicrosoftWindows.Client.Core_1000.26100.31.0_x64__cw5n1h2txyewy
+InstallLocation        : C:\Windows\SystemApps\MicrosoftWindows.Client.Core_cw5n1h2txyewy
+IsFramework            : False
+PackageUserInformation : {}
+IsResourcePackage      : False
+IsBundle               : False
+IsDevelopmentMode      : False
+NonRemovable           : True
+Dependencies           : {}
+IsPartiallyStaged      : False
+SignatureKind          : System
+Status                 : Ok
