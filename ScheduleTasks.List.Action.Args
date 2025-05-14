@@ -1,0 +1,130 @@
+# Various Ways To List Actions and Arguements of Scheduled Tasks.
+
+
+
+===============================================================
+DETAILED
+---------------------------------------------------------------
+
+# Lists all Scheduled Tasks and their Action Arguments
+
+$tasks = Get-ScheduledTask
+
+foreach ($task in $tasks) {
+    $taskInfo = Get-ScheduledTaskInfo -TaskName $task.TaskName -TaskPath $task.TaskPath
+    $actions = $task.Actions
+
+    foreach ($action in $actions) {
+        if ($action.Arguments) {
+            [PSCustomObject]@{
+                TaskName   = $task.TaskName
+                TaskPath   = $task.TaskPath
+                Action     = $action.Execute
+                Arguments  = $action.Arguments
+                WorkingDir = $action.WorkingDirectory
+                State      = $taskInfo.State
+                LastRun    = $taskInfo.LastRunTime
+                NextRun    = $taskInfo.NextRunTime
+            }
+        }
+    }
+}
+
+
+
+
+===============================================================
+SIMPLIFIED
+---------------------------------------------------------------
+
+# List Scheduled Tasks and their Action Arguments in Table Format
+
+$tasks = Get-ScheduledTask
+$results = foreach ($task in $tasks) {
+    $taskInfo = Get-ScheduledTaskInfo -TaskName $task.TaskName -TaskPath $task.TaskPath
+    $actions = $task.Actions
+
+    foreach ($action in $actions) {
+        [PSCustomObject]@{
+            TaskName   = $task.TaskName
+            Action     = $action.Execute
+            Arguments  = $action.Arguments
+            WorkingDir = $action.WorkingDirectory
+            State      = $taskInfo.State
+        }
+    }
+}
+
+$results | Format-List 
+
+
+
+
+===============================================================
+Most Detailed | Function
+---------------------------------------------------------------
+
+function Get-ScheduledTaskArgumentsDetailed {
+    <#
+    .SYNOPSIS
+        Lists all scheduled tasks that have arguments, showing detailed info including last and next run times.
+    .EXAMPLE
+        Get-ScheduledTaskArgumentsDetailed
+    #>
+
+    $tasks = Get-ScheduledTask
+    $results = foreach ($task in $tasks) {
+        $taskInfo = Get-ScheduledTaskInfo -TaskName $task.TaskName -TaskPath $task.TaskPath
+        $actions = $task.Actions
+
+        foreach ($action in $actions) {
+            if ($action.Arguments) {
+                [PSCustomObject]@{
+                    TaskName   = $task.TaskName
+                    TaskPath   = $task.TaskPath
+                    Action     = $action.Execute
+                    Arguments  = $action.Arguments
+                    WorkingDir = $action.WorkingDirectory
+                    State      = $taskInfo.State
+                    LastRun    = $taskInfo.LastRunTime
+                    NextRun    = $taskInfo.NextRunTime
+                }
+            }
+        }
+    }
+
+    $results | Format-Table -AutoSize
+}
+
+
+
+===============================================================
+Simplified | Function
+---------------------------------------------------------------
+function Get-ScheduledTaskArguments {
+    <#
+    .SYNOPSIS
+        Lists all scheduled tasks and displays their actions and arguments in a formatted table.
+    .EXAMPLE
+        Get-ScheduledTaskArguments
+    #>
+
+    $tasks = Get-ScheduledTask
+    $results = foreach ($task in $tasks) {
+        $taskInfo = Get-ScheduledTaskInfo -TaskName $task.TaskName -TaskPath $task.TaskPath
+        $actions = $task.Actions
+
+        foreach ($action in $actions) {
+            [PSCustomObject]@{
+                TaskName   = $task.TaskName
+                Action     = $action.Execute
+                Arguments  = $action.Arguments
+                WorkingDir = $action.WorkingDirectory
+                State      = $taskInfo.State
+            }
+        }
+    }
+
+    $results | Format-Table -AutoSize
+}
+===============================================================
