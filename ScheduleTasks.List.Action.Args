@@ -21,14 +21,15 @@ foreach ($task in $tasks) {
                 TaskPath   = $task.TaskPath
                 Action     = $action.Execute
                 Arguments  = $action.Arguments
-                WorkingDir = $action.WorkingDirectory
                 State      = $taskInfo.State
                 LastRun    = $taskInfo.LastRunTime
                 NextRun    = $taskInfo.NextRunTime
+                Description = $task.Description
             }
         }
     }
 }
+
 
 
 
@@ -49,14 +50,11 @@ $results = foreach ($task in $tasks) {
             TaskName   = $task.TaskName
             Action     = $action.Execute
             Arguments  = $action.Arguments
-            WorkingDir = $action.WorkingDirectory
-            State      = $taskInfo.State
         }
     }
 }
 
 $results | Format-List 
-
 
 
 
@@ -80,20 +78,20 @@ function Get-ScheduledTaskArgumentsDetailed {
         foreach ($action in $actions) {
             if ($action.Arguments) {
                 [PSCustomObject]@{
-                    TaskName   = $task.TaskName
-                    TaskPath   = $task.TaskPath
-                    Action     = $action.Execute
-                    Arguments  = $action.Arguments
-                    WorkingDir = $action.WorkingDirectory
-                    State      = $taskInfo.State
-                    LastRun    = $taskInfo.LastRunTime
-                    NextRun    = $taskInfo.NextRunTime
+                TaskName   = $task.TaskName
+                TaskPath   = $task.TaskPath
+                Action     = $action.Execute
+                Arguments  = $action.Arguments
+                State      = $taskInfo.State
+                LastRun    = $taskInfo.LastRunTime
+                NextRun    = $taskInfo.NextRunTime
+                Description = $task.Description
                 }
             }
         }
     }
 
-    $results | Format-Table -AutoSize
+    $results | Format-List
 }
 
 
@@ -119,12 +117,11 @@ function Get-ScheduledTaskArguments {
                 TaskName   = $task.TaskName
                 Action     = $action.Execute
                 Arguments  = $action.Arguments
-                WorkingDir = $action.WorkingDirectory
                 State      = $taskInfo.State
             }
         }
     }
 
-    $results | Format-Table -AutoSize
+    $results | Format-List
 }
 ===============================================================
