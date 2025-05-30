@@ -1,0 +1,16 @@
+# Script to replace default Word formatting with preconfigured Normal.dotm (New document template). 
+
+$source = "C:\Users\XXXX\Desktop\Normal.dotm"  # Or .dot, depending on your file
+$destinationFolder = "$env:APPDATA\Microsoft\Templates"
+$destination = Join-Path $destinationFolder "Normal.dotm"  # Or .dot for older Word versions
+
+# Backup the existing Normal.dotm
+if (Test-Path $destination) {
+    $backup = Join-Path $destinationFolder "Normal_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').dotm"
+    Copy-Item $destination $backup
+    Write-Output "Backup created: $backup"
+}
+
+# Copy the custom template to replace Normal.dotm
+Copy-Item $source $destination -Force
+Write-Output "Normal.dotm has been replaced."
