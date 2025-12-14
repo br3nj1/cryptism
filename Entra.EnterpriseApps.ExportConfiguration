@@ -1,0 +1,320 @@
+# =====================================================================
+# BULK ENTERPRISE APP EXPORT – DUAL MODE (SAML + OIDC)
+# ---------------------------------------------------------------------
+# Export Entra Enterprise Application contents from list of ObjectIDs.
+# =====================================================================
+
+# =====================================================================
+# PREREQUISITES
+# 1. PowerShell v7
+# 2. input_apps.csv
+#       Row 1 Headers:   ServicePrincipalObjectId  Notes
+#       Row 2 Content:   c6a1f9e-3b1c-4f0c-bc0a-1a2b3c4d5e6f, AWS-SSO
+# 3a. Save scripts as "Bulk-EntApp-Export.ps1"
+# 3b. Suggeted outpath: C:\EntraExports
+# 4. Run ps1 with parameters from ISE; 
+# =====================================================================
+# Example 
+1. Open VS Code.
+2. Connect-MGGraph
+3. Run Script with Parameters
+------------------------------------------------------------------------
+
+pwsh.exe C:\EntraExport\Bulk-EntApp-Export.ps1 `
+  -InputCsvPath "C:\EntraExports\input_apps.csv" `
+  -TenantId "2b2ba713-874b-450b-a5fa-e4690ff0e3ca" `
+  -OutputRoot "C:\EntraExports\Run_2025-01-13"
+
+# =====================================================================
+# Export Contents
+
+1. Metadata; SAML or OIDC
+2. Service Principal (Enterprise Application)
+3. Application (App Registration)
+3. Single Sign-On Configuration
+4. Provisioning (SCIM)
+5. Assignments
+7. Users & Groups (Expanded)
+
+# # ===================================================================
+# # ===================================================================
+
+########################## SCRIPT #####################################
+
+# =====================================================================
+# BULK ENTERPRISE APP EXPORT – DUAL MODE (SAML + OIDC)
+# Built on: FULL SCRIPT — DUAL-MODE ENTERPRISE APP EXPORT (FINAL)
+# =====================================================================
+
+param(
+    [Parameter(Mandatory)]
+    [string]$InputCsvPath,
+
+    [Parameter(Mandatory)]
+    [string]$TenantId,
+
+    [string]$OutputRoot = ".\BulkExport"
+)
+
+# ---------------------------
+# Preconditions
+# ---------------------------
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    throw "PowerShell 7+ required"
+}
+
+Select-MgProfile -Name "v1.0"
+
+Connect-MgGraph -TenantId $TenantId -Scopes @(
+    "Directory.Read.All",
+    "Application.Read.All",
+    "Group.Read.All",
+    "User.Read.All"
+)
+
+# ---------------------------
+# Prepare folders
+# ---------------------------
+$null = New-Item -ItemType Directory -Path $OutputRoot -Force
+$appsOut   = Join-Path $OutputRoot "Apps"
+$null = New-Item -ItemType Directory -Path $appsOut -Force
+
+$summary = @()
+$errors  = @()
+
+# ---------------------------
+# Load CSV
+# ---------------------------
+$apps = Import-Csv $InputCsvPath
+
+Write-Host "Processing $($apps.Count) Enterprise Applications..." -ForegroundColor Cyan
+
+# =====================================================================
+# BULK LOOP
+# =====================================================================
+
+foreach ($row in $apps) {
+
+    $spId = $row.ServicePrincipalObjectId
+    $note = $row.Notes
+
+    Write-Host "`n--- Processing $spId ---" -ForegroundColor Yellow
+
+    try {
+        # =============================================================
+        # BEGIN: FINAL PER-APP EXPORT LOGIC (UNMODIFIED)
+        # =============================================================
+
+        $sp   = Get-MgServicePrincipal -ServicePrincipalId $spId -ErrorAction Stop
+        $mode = $sp.PreferredSingleSignOnMode
+        $app  = Get-MgApplication -Filter "appId eq '$($sp.AppId)'" -ErrorAction Stop
+
+        # Certificates
+        $certs = foreach ($k in $sp.KeyCredentials) {
+            [pscustomobject]@{
+                DisplayName   = $k.DisplayName
+                Type          = $k.Type
+                Usage         = $k.Usage
+                StartDateTime = $k.StartDateTime
+                EndDateTime   = $k.EndDateTime
+            }
+        }
+
+        # Assignments
+        $assignments = Get-MgServicePrincipalAppRoleAssignedTo `
+            -ServicePrincipalId $sp.Id -All
+
+        # Expand Groups (BFS)
+        function Expand-Groups {
+            param([string]$GroupId)
+
+            $queue = [System.Collections.Generic.Queue[string]]::new()
+            $seen  = [System.Collections.Generic.HashSet[string]]::new()
+
+            $queue.Enqueue($GroupId)
+            $seen.Add($GroupId) | Out-Null
+
+            while ($queue.Count -gt 0) {
+                $gid = $queue.Dequeue()
+                foreach ($m in (Get-MgGroupMember -GroupId $gid -All -ErrorAction SilentlyContinue)) {
+                    $type = $m.AdditionalProperties['@odata.type'] -replace '#microsoft.graph.', ''
+                    [pscustomobject]@{
+                        ParentGroupId = $gid
+                        MemberId      = $m.Id
+                        Type          = $type
+                        DisplayName   = $m.AdditionalProperties['displayName']
+                        UPN           = $m.AdditionalProperties['userPrincipalName']
+                    }
+                    if ($type -eq "group" -and !$seen.Contains($m.Id)) {
+                        $seen.Add($m.Id) | Out-Null
+                        $queue.Enqueue($m.Id)
+                    }
+                }
+            }
+        }
+
+        $expandedGroups = foreach ($g in ($assignments | Where-Object PrincipalType -eq "Group")) {
+            Expand-Groups -GroupId $g.PrincipalId
+        }
+
+        # SCIM
+        try {
+            $sync = Get-MgServicePrincipalSynchronization -ServicePrincipalId $sp.Id
+            $scim = @{
+                IsEnabled = $true
+                Endpoint  = $sync.AdditionalProperties.template.context.scimConfiguration.baseUrl
+                Schedule  = $sync.AdditionalProperties.template.context.schedule
+                Mappings  = $sync.AdditionalProperties.template.context.mappings
+            }
+        }
+        catch {
+            $scim = @{ IsEnabled = $false }
+        }
+
+        # SSO
+        $sso = @{ Mode = $mode }
+
+        if ($mode -eq "saml") {
+
+            try {
+                $claimsPolicies = Get-MgServicePrincipalClaimMappingPolicy `
+                    -ServicePrincipalId $sp.Id -All
+            }
+            catch {
+                $claimsPolicies = @()
+            }
+
+            $claimsGrouped = @{
+                Source = "user"
+                Claims = @{}
+            }
+
+            if ($claimsPolicies.Count -gt 0) {
+                foreach ($policy in $claimsPolicies) {
+                    foreach ($def in $policy.Definition) {
+                        $json = $def | ConvertFrom-Json
+                        foreach ($c in $json.ClaimsSchema) {
+                            $claimsGrouped.Claims[$c.Name] = $c.SourceClaim
+                        }
+                    }
+                }
+            }
+            else {
+                $claimsGrouped.Claims = @{
+                    "givenname"              = "givenname"
+                    "surname"                = "surname"
+                    "emailaddress"           = "mail"
+                    "name"                   = "displayname"
+                    "Unique User Identifier" = "userprincipalname"
+                    "upn"                    = "userprincipalname"
+                    "jobtitle"               = "jobtitle"
+                    "department"             = "department"
+                    "objectid"               = "objectid"
+                    "identityprovider"       = "identityprovider"
+                }
+            }
+
+            $fedUrl = "https://login.microsoftonline.com/$TenantId/federationmetadata/2007-06/federationmetadata.xml?appid=$($sp.AppId)"
+            try { $fedXml = (Invoke-WebRequest $fedUrl -UseBasicParsing).Content }
+            catch { $fedXml = $null }
+
+            $sso.SAML = @{
+                IdentifierUris          = $app.IdentifierUris
+                ReplyUrls               = $app.Web.RedirectUris
+                SignOnUrl               = $app.Web.HomePageUrl
+                SamlAttributesAndClaims = $claimsGrouped
+                FederationMetadataXml   = $fedXml
+            }
+        }
+
+        if ($mode -eq "oidc") {
+            $sso.OIDC = @{
+                RedirectUris = @{
+                    Web          = $app.Web.RedirectUris
+                    Spa          = $app.Spa.RedirectUris
+                    PublicClient = $app.PublicClient.RedirectUris
+                }
+                OptionalClaims         = $app.OptionalClaims
+                RequiredResourceAccess = $app.RequiredResourceAccess
+                OAuth2Scopes           = $app.Api.Oauth2PermissionScopes
+                ImplicitGrantSettings  = $app.Web.ImplicitGrantSettings
+            }
+        }
+
+        $export = @{
+            Metadata = @{
+                SourceTenantId = $TenantId
+                ExportedAtUtc  = (Get-Date).ToUniversalTime()
+                Notes          = $note
+            }
+            ServicePrincipal = @{
+                DisplayName  = $sp.DisplayName
+                AppId        = $sp.AppId
+                ObjectId     = $sp.Id
+                SsoMode      = $mode
+                AppRoles     = $sp.AppRoles
+                Certificates = $certs
+            }
+            Application      = @{
+                ObjectId       = $app.Id
+                DisplayName    = $app.DisplayName
+                SignInAudience = $app.SignInAudience
+                IdentifierUris = $app.IdentifierUris
+            }
+            SSOConfiguration = $sso
+            Provisioning     = $scim
+            Assignments      = @{
+                Direct         = $assignments
+                ExpandedGroups = $expandedGroups
+            }
+        }
+
+        # =============================================================
+        # END: FINAL LOGIC
+        # =============================================================
+
+        # Write per-app JSON
+        $safeName = ($sp.DisplayName -replace '[^a-zA-Z0-9\- ]', '').Replace(' ', '_')
+        $fileName = "EntApp_$safeName`_$($sp.Id).json"
+        $outPath  = Join-Path $appsOut $fileName
+
+        $export | ConvertTo-Json -Depth 60 | Set-Content -Encoding UTF8 -Path $outPath
+
+        # Summary
+        $summary += [pscustomobject]@{
+            DisplayName              = $sp.DisplayName
+            ServicePrincipalObjectId = $sp.Id
+            AppId                    = $sp.AppId
+            SsoMode                  = $mode
+            HasSCIM                  = $scim.IsEnabled
+            OutputFile               = $fileName
+            Status                   = "Success"
+        }
+
+        Write-Host "✔ Exported $($sp.DisplayName)" -ForegroundColor Green
+    }
+    catch {
+        $errors += $_.Exception.Message
+
+        $summary += [pscustomobject]@{
+            DisplayName              = $null
+            ServicePrincipalObjectId = $spId
+            AppId                    = $null
+            SsoMode                  = $null
+            HasSCIM                  = $null
+            OutputFile               = $null
+            Status                   = "Failed"
+        }
+
+        Write-Host "✖ Failed $spId" -ForegroundColor Red
+    }
+}
+
+# ---------------------------
+# Write summary
+# ---------------------------
+$summaryPath = Join-Path $OutputRoot "export-summary.csv"
+$summary | Export-Csv -NoTypeInformation -Path $summaryPath
+
+Write-Host "`nBulk export complete." -ForegroundColor Cyan
+Write-Host "Summary: $summaryPath"
