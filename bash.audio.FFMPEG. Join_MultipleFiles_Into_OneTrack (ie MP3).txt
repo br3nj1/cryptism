@@ -1,0 +1,1 @@
+ffmpeg -loop 1 -i "The Man & Journey ROIO Cover.jpg" -i "The Man & The Journy (09-17-1969 Roio version).mp3" -c:v libx264 -c:a aac -b:a 192k -shortest "The Man & The Journy (09-17-1969 Roio version).mp4"
