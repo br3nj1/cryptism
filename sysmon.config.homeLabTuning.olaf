@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Sysmon schemaversion="4.91">
+  <HashAlgorithms>*</HashAlgorithms>
+  <EventFiltering>
+
+    <!-- Process Creation -->
+    <ProcessCreate onmatch="include">
+      <Image condition="end with">powershell.exe</Image>
+      <Image condition="end with">pwsh.exe</Image>
+      <Image condition="end with">cmd.exe</Image>
+      <Image condition="end with">wscript.exe</Image>
+      <Image condition="end with">cscript.exe</Image>
+      <Image condition="end with">mshta.exe</Image>
+      <Image condition="end with">rundll32.exe</Image>
+      <Image condition="end with">regsvr32.exe</Image>
+      <Image condition="end with">wmic.exe</Image>
+      <Image condition="end with">schtasks.exe</Image>
+      <Image condition="end with">certutil.exe</Image>
+      <Image condition="end with">bitsadmin.exe</Image>
+      <Image condition="end with">curl.exe</Image>
+      <Image condition="end with">ssh.exe</Image>
+      <Image condition="end with">scp.exe</Image>
+      <Image condition="contains">\AppData\</Image>
+      <Image condition="contains">\Temp\</Image>
+      <Image condition="contains">\Downloads\</Image>
+      <ParentImage condition="end with">winword.exe</ParentImage>
+      <ParentImage condition="end with">excel.exe</ParentImage>
+      <ParentImage condition="end with">outlook.exe</ParentImage>
+      <ParentImage condition="end with">chrome.exe</ParentImage>
+      <ParentImage condition="end with">msedge.exe</ParentImage>
+    </ProcessCreate>
+
+    <!-- Network Connections -->
+    <NetworkConnect onmatch="include">
+      <Image condition="end with">powershell.exe</Image>
+      <Image condition="end with">pwsh.exe</Image>
+      <Image condition="end with">cmd.exe</Image>
+      <Image condition="end with">mshta.exe</Image>
+      <Image condition="end with">rundll32.exe</Image>
+      <Image condition="end with">regsvr32.exe</Image>
+      <Image condition="end with">wmic.exe</Image>
+      <Image condition="contains">\Temp\</Image>
+      <Image condition="contains">\AppData\</Image>
+    </NetworkConnect>
+
+    <!-- Image Load -->
+    <ImageLoad onmatch="include">
+      <ImageLoaded condition="contains">\Temp\</ImageLoaded>
+      <ImageLoaded condition="contains">\AppData\</ImageLoaded>
+      <ImageLoaded condition="contains">\Downloads\</ImageLoaded>
+      <Signed condition="is">false</Signed>
+    </ImageLoad>
+
+    <!-- Create Remote Thread -->
+    <CreateRemoteThread onmatch="include" />
+
+    <!-- Process Access -->
+    <ProcessAccess onmatch="include">
+      <TargetImage condition="end with">lsass.exe</TargetImage>
+      <TargetImage condition="end with">winlogon.exe</TargetImage>
+    </ProcessAccess>
+
+    <!-- File Creation -->
+    <FileCreate onmatch="include">
+      <TargetFilename condition="contains">\Downloads\</TargetFilename>
+      <TargetFilename condition="contains">\Desktop\</TargetFilename>
+      <TargetFilename condition="contains">\Temp\</TargetFilename>
+      <TargetFilename condition="contains">\AppData\</TargetFilename>
+      <TargetFilename condition="end with">.exe</TargetFilename>
+      <TargetFilename condition="end with">.dll</TargetFilename>
+      <TargetFilename condition="end with">.ps1</TargetFilename>
+      <TargetFilename condition="end with">.vbs</TargetFilename>
+      <TargetFilename condition="end with">.js</TargetFilename>
+    </FileCreate>
+
+    <!-- Registry -->
+    <RegistryEvent onmatch="include">
+      <TargetObject condition="contains">\Run</TargetObject>
+      <TargetObject condition="contains">\RunOnce</TargetObject>
+      <TargetObject condition="contains">\Winlogon</TargetObject>
+      <TargetObject condition="contains">\Services</TargetObject>
+      <TargetObject condition="contains">\AppInit_DLLs</TargetObject>
+      <TargetObject condition="contains">\Image File Execution Options\</TargetObject>
+    </RegistryEvent>
+
+    <!-- Named Pipes -->
+    <PipeEvent onmatch="include" />
+
+    <!-- WMI -->
+    <WmiEvent onmatch="include" />
+
+    <!-- DNS -->
+    <DnsQuery onmatch="exclude">
+      <Image condition="end with">chrome.exe</Image>
+      <Image condition="end with">msedge.exe</Image>
+      <Image condition="end with">firefox.exe</Image>
+      <Image condition="end with">teams.exe</Image>
+      <Image condition="end with">onedrive.exe</Image>
+      <Image condition="end with">steam.exe</Image>
+    </DnsQuery>
+
+    <!-- Clipboard -->
+    <ClipboardChange onmatch="include" />
+
+    <!-- Process Tampering -->
+    <ProcessTampering onmatch="include" />
+
+    <!-- File Delete -->
+    <FileDeleteDetected onmatch="include" />
+
+  </EventFiltering>
+</Sysmon>
