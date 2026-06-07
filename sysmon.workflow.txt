@@ -1,0 +1,627 @@
+I created a tuned Sysmon configuration for your 5-device Windows 11 Pro home environment, focused on:
+
+* PowerShell abuse
+* LOLBIN activity
+* AppData/Temp execution
+* Browser-child-process attacks
+* Infostealers
+* WMI persistence
+* Named pipes
+* LSASS access
+* DLL sideloading
+* Process tampering
+* DNS visibility with browser noise reduction
+
+Files:
+
+* [Download the Sysmon configuration](sandbox:/mnt/data/sysmon-home-lab.xml)
+* [Download the installation and PowerShell logging guide](sandbox:/mnt/data/sysmon-install-guide.txt)
+
+Recommended next steps:
+
+1. Install Sysmon on a single “canary” system first.
+2. Let it run 24–48 hours.
+3. Review:
+
+   * Event volume
+   * False positives
+   * Browser noise
+   * Developer/admin tooling noise
+4. Then deploy to the remaining systems.
+
+Important:
+This config is intentionally more aggressive than enterprise defaults because your environment is small and security-focused. It will produce meaningful telemetry but still avoids the “log literally everything” trap.
+
+Major things still worth adding later:
+
+* Sigma rule mapping
+* Wazuh decoder tuning
+* Sysmon Event ID 7 whitelist tuning
+* Defender integration
+* PowerShell encoded-command detection
+* RMM tool monitoring
+* Zeek/Suricata network telemetry
+* Centralized WEF/Wazuh pipeline
+* Home-lab ATT&CK coverage matrix
+
+A very important operational note:
+Event ID 7 (ImageLoad) and Event ID 22 (DNS) are the first areas that usually need tuning over time. Those are also some of the highest-value signals for modern commodity malware and infostealers.
+
+
+=============
+
+# Sysmon Tuning Workflow
+
+## Focus: Event ID 7 (ImageLoad) and Event ID 22 (DNS)
+
+This workflow is designed specifically for:
+
+* small advanced home labs
+* PowerShell-heavy environments
+* gaming + admin systems
+* security tooling present
+* long-term iterative tuning
+
+The goal is:
+
+```text id="cok8yt"
+Keep the detections
+Remove the entropy
+```
+
+NOT:
+
+```text id="z7q5d0"
+Remove the logs
+```
+
+That distinction is critical.
+
+---
+
+# Why These Two Events Matter
+
+| Event       | Why Valuable                               | Why Dangerous     |
+| ----------- | ------------------------------------------ | ----------------- |
+| 7 ImageLoad | DLL sideloading, loaders, unsigned modules | Extreme volume    |
+| 22 DNS      | C2, malware, beaconing                     | Browser explosion |
+
+These two events:
+
+* produce some of the BEST detections
+* are also the fastest way to overwhelm storage and analysts
+
+---
+
+# PHASE 1 — Baselining
+
+## Duration
+
+Run:
+
+* 48–72 hours minimum
+* normal behavior
+* gaming
+* admin work
+* browsing
+* software installs
+* PowerShell activity
+
+DO NOT tune immediately.
+
+---
+
+# Collect Initial Metrics
+
+Track:
+
+| Metric                 | Why                   |
+| ---------------------- | --------------------- |
+| Events/day             | Storage sizing        |
+| Top talkers            | Noise sources         |
+| Top DLL paths          | Legit baselines       |
+| Top DNS clients        | Browser noise         |
+| Unsigned DLL frequency | Risk baseline         |
+| Temp/AppData loads     | Malware surface       |
+| Event spikes           | Misconfigured filters |
+
+---
+
+# STEP 1 — Identify Top Noise Producers
+
+## Event ID 22 (DNS)
+
+You will immediately see:
+
+```text id="vjlwm1"
+chrome.exe
+msedge.exe
+firefox.exe
+teams.exe
+discord.exe
+steam.exe
+onedrive.exe
+```
+
+These dominate DNS telemetry.
+
+---
+
+# Your First DNS Tuning Rule
+
+## Keep:
+
+### LOLBIN networking
+
+```text id="mx6u0s"
+powershell.exe
+pwsh.exe
+cmd.exe
+mshta.exe
+rundll32.exe
+regsvr32.exe
+wmic.exe
+curl.exe
+ssh.exe
+```
+
+These are gold.
+
+---
+
+# Your First DNS Exclusions
+
+Exclude:
+
+```xml id="e4v4iu"
+<DnsQuery onmatch="exclude">
+    <Image condition="end with">chrome.exe</Image>
+    <Image condition="end with">msedge.exe</Image>
+    <Image condition="end with">firefox.exe</Image>
+</DnsQuery>
+```
+
+BUT:
+
+Do NOT immediately exclude:
+
+* Teams
+* Discord
+* Steam
+* OneDrive
+
+First determine:
+
+* actual event volume
+* usefulness
+* anomaly visibility
+
+---
+
+# PHASE 2 — ImageLoad Tuning
+
+This is the hard part.
+
+---
+
+# STEP 2 — Categorize DLL Loads
+
+Split into:
+
+| Category                     | Action          |
+| ---------------------------- | --------------- |
+| Microsoft signed system DLLs | Usually exclude |
+| Browser sandbox DLLs         | Exclude         |
+| GPU/vendor DLLs              | Usually exclude |
+| Temp/AppData DLLs            | Keep            |
+| Unsigned DLLs                | Keep            |
+| User-writeable paths         | Keep            |
+| Archive extraction paths     | Keep            |
+| Rare DLLs                    | Investigate     |
+
+---
+
+# DO NOT DO THIS
+
+Never:
+
+```xml id="e9n7u8"
+<ImageLoad onmatch="exclude">
+    <Signed condition="is">true</Signed>
+</ImageLoad>
+```
+
+Why?
+
+Many malware families:
+
+* use signed DLLs
+* side-load signed binaries
+* abuse vulnerable signed drivers
+
+---
+
+# Instead Use PATH-BASED TUNING
+
+This is MUCH better.
+
+---
+
+# Keep Monitoring DLL Loads From
+
+## High-risk paths
+
+```text id="4bb13k"
+\AppData\
+\Temp\
+\Downloads\
+\Desktop\
+\Recycle Bin\
+\ProgramData\
+\Users\Public\
+Mounted ISO paths
+ZIP extraction folders
+```
+
+These are high-value.
+
+---
+
+# Exclude High-Noise Legitimate Sources
+
+Eventually exclude:
+
+## Browsers
+
+```text id="c3l9xz"
+Chrome
+Edge
+Firefox
+```
+
+## GPU Drivers
+
+```text id="p0lhvw"
+NVIDIA
+AMD
+Intel graphics
+```
+
+## Collaboration Software
+
+```text id="7ay3iv"
+Teams
+Discord
+Slack
+Zoom
+```
+
+## Development
+
+```text id="gb1rme"
+VSCode
+Docker
+WSL
+NodeJS
+Python environments
+```
+
+Especially relevant for you.
+
+---
+
+# STEP 3 — Hunt Before Excluding
+
+Critical rule:
+
+```text id="jlwmck"
+Never exclude before reviewing anomalies.
+```
+
+Common mistake:
+
+* analysts tune too early
+* remove actual detections
+
+---
+
+# Example Good Review Questions
+
+## DLL Load
+
+Ask:
+
+* Is this unsigned?
+* User-writeable path?
+* Rare?
+* Loaded by Office?
+* Loaded by browser child process?
+* Loaded by LOLBIN?
+* Newly observed?
+* Random filename?
+* ADS involved?
+
+---
+
+# Example DNS Questions
+
+Ask:
+
+* Is PowerShell doing DNS?
+* Is Office doing DNS?
+* Is rundll32 making requests?
+* Is DNS happening from Temp/AppData executables?
+* DGA-like domains?
+* Newly registered domains?
+* Excessive TXT queries?
+* Internal RFC1918 beaconing?
+
+---
+
+# PHASE 3 — Statistical Tuning
+
+After ~1 week:
+
+Build:
+
+* frequency baselines
+* rarity baselines
+
+---
+
+# Best ImageLoad Tuning Strategy
+
+## Keep Rare DLLs
+
+Exclude:
+
+* repetitive known DLLs
+
+Keep:
+
+* low-frequency anomalies
+
+---
+
+# Example Logic
+
+## BAD
+
+```text id="yjlwmr"
+Exclude everything signed
+```
+
+## GOOD
+
+```text id="gz1qao"
+Exclude repetitive known-good signed DLLs
+Keep rare signed DLLs in risky paths
+```
+
+---
+
+# PHASE 4 — Threat-Driven Tuning
+
+Tune against:
+
+* real malware
+* not cleanliness
+
+---
+
+# Recommended Test Malware Simulations
+
+Safely simulate:
+
+| Technique                  | Tool            |
+| -------------------------- | --------------- |
+| PowerShell download cradle | Atomic Red Team |
+| rundll32 abuse             | LOLBAS          |
+| mshta payload              | LOLBAS          |
+| temp DLL load              | harmless DLL    |
+| WMI persistence            | test consumer   |
+| encoded PowerShell         | benign payload  |
+| AppData execution          | test EXE        |
+
+---
+
+# Excellent Tool
+
+[Atomic Red Team](https://github.com/redcanaryco/atomic-red-team?utm_source=chatgpt.com)
+
+This is PERFECT for Sysmon tuning.
+
+---
+
+# PHASE 5 — Long-Term Operations
+
+## Monthly Review
+
+Review:
+
+* new software
+* driver updates
+* new gaming tools
+* browser extensions
+* AI tooling
+* WSL changes
+
+These dramatically affect Event 7.
+
+---
+
+# PHASE 6 — IOC Correlation
+
+Now you begin turning telemetry into detections.
+
+---
+
+# HIGH VALUE DETECTIONS
+
+## Event 7
+
+### Detect:
+
+* unsigned DLL
+* loaded from AppData
+* by Office
+* or browser child process
+
+That’s excellent.
+
+---
+
+# Event 22
+
+### Detect:
+
+* PowerShell making DNS
+* cmd.exe making DNS
+* temp executable doing DNS
+
+Extremely high signal.
+
+---
+
+# Suggested Weekly Workflow
+
+# Monday
+
+Review top Event 7 DLL paths
+
+# Tuesday
+
+Review unsigned DLLs
+
+# Wednesday
+
+Review DNS outliers
+
+# Thursday
+
+Review LOLBIN networking
+
+# Friday
+
+Tune exclusions
+
+---
+
+# Suggested Logging Pipeline
+
+## Export to:
+
+* Wazuh
+* Security Onion
+* Graylog
+* Elastic
+* Sentinel
+
+Then build:
+
+* rarity dashboards
+* unsigned DLL dashboards
+* DNS entropy dashboards
+* LOLBIN DNS dashboards
+
+---
+
+# VERY IMPORTANT CONCEPT
+
+## Tune by:
+
+### Behavior
+
+NOT
+
+### Vendor
+
+Example:
+
+## GOOD
+
+```text id="i5ntz9"
+Exclude repetitive Chrome GPU sandbox DLLs
+```
+
+## BAD
+
+```text id="r59zjlwm"
+Exclude all Chrome DLLs
+```
+
+Attackers abuse Chrome constantly.
+
+---
+
+# Your Environment-Specific Concern
+
+Because you:
+
+* use PowerShell heavily
+* likely use WSL
+* may use security tools
+* likely use admin utilities
+
+You MUST:
+
+* tune slowly
+* preserve admin telemetry
+* avoid over-whitelisting yourself
+
+Security professionals accidentally blind themselves constantly.
+
+---
+
+# Strong Recommendation
+
+Create three exclusion tiers:
+
+| Tier   | Meaning        |
+| ------ | -------------- |
+| Tier 1 | Never exclude  |
+| Tier 2 | Review monthly |
+| Tier 3 | Fully exclude  |
+
+---
+
+# My Suggested Tier 1
+
+Never exclude:
+
+```text id="yzx8oh"
+powershell.exe
+pwsh.exe
+cmd.exe
+mshta.exe
+rundll32.exe
+regsvr32.exe
+wmic.exe
+office child processes
+temp execution
+AppData execution
+unsigned DLLs
+```
+
+These are your best detections.
+
+---
+
+# Final Operational Advice
+
+The biggest Sysmon tuning mistake is:
+
+```text id="4wz0tp"
+Tuning for quietness instead of tuning for signal quality.
+```
+
+You want:
+
+* low entropy
+* high fidelity
+* behavior-focused telemetry
+* anomaly preservation
+
+NOT:
+
+* minimal logs.
